@@ -28,62 +28,74 @@ export const ArticleParamsForm = ({
 	onApply,
 	currentState,
 }: ArticleParamsFormProps) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [formState, setFormState] = useState<ArticleStateType>(currentState);
 
-	const rootRef = useRef<HTMLDivElement>(null);
+	const formContainerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
+		if (!isFormOpen) {
+			return;
+		}
+
+		const handleOverlayClick = (event: MouseEvent) => {
 			if (
-				isOpen &&
-				rootRef.current &&
-				!rootRef.current.contains(event.target as Node)
+				formContainerRef.current &&
+				!formContainerRef.current.contains(event.target as Node)
 			) {
-				setIsOpen(false);
+				setIsFormOpen(false);
 			}
 		};
 
-		document.addEventListener('mousedown', handleClickOutside);
+		document.addEventListener('mousedown', handleOverlayClick);
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
+			document.removeEventListener('mousedown', handleOverlayClick);
 		};
-	}, [isOpen]);
+	}, [isFormOpen]);
 
 	useEffect(() => {
-		if (isOpen) {
+		if (isFormOpen) {
 			setFormState(currentState);
 		}
-	}, [isOpen, currentState]);
+	}, [isFormOpen, currentState]);
 
-	const handleArrowClick = () => {
-		setIsOpen((prev) => !prev);
+	const handleArrowButtonClick = () => {
+		setIsFormOpen((previousState) => !previousState);
 	};
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+	const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		onApply(formState);
 	};
 
-	const handleReset = (event: FormEvent<HTMLFormElement>) => {
+	const handleFormReset = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setFormState(defaultArticleState);
 		onApply(defaultArticleState);
 	};
 
+	const updateFormField =
+		<Key extends keyof ArticleStateType>(fieldName: Key) =>
+		(fieldValue: ArticleStateType[Key]) => {
+			setFormState((previousState) => ({
+				...previousState,
+				[fieldName]: fieldValue,
+			}));
+		};
+
 	return (
-		<div ref={rootRef}>
-			<ArrowButton isOpen={isOpen} onClick={handleArrowClick} />
+		<div ref={formContainerRef}>
+			<ArrowButton isOpen={isFormOpen} onClick={handleArrowButtonClick} />
 
 			<aside
 				className={clsx(styles.container, {
-					[styles.container_open]: isOpen,
+					[styles.container_open]: isFormOpen,
 				})}>
 				<form
 					className={styles.form}
-					onSubmit={handleSubmit}
-					onReset={handleReset}>
+					onSubmit={handleFormSubmit}
+					onReset={handleFormReset}>
 					<h2 className={styles.title}>ЗАДАЙТЕ ПАРАМЕТРЫ</h2>
 
 					<div className={styles.field}>
@@ -91,12 +103,7 @@ export const ArticleParamsForm = ({
 							title='Шрифт'
 							selected={formState.fontFamilyOption}
 							options={fontFamilyOptions}
-							onChange={(option) =>
-								setFormState((prev) => ({
-									...prev,
-									fontFamilyOption: option,
-								}))
-							}
+							onChange={updateFormField('fontFamilyOption')}
 						/>
 					</div>
 
@@ -106,12 +113,7 @@ export const ArticleParamsForm = ({
 							name='fontSize'
 							selected={formState.fontSizeOption}
 							options={fontSizeOptions}
-							onChange={(option) =>
-								setFormState((prev) => ({
-									...prev,
-									fontSizeOption: option,
-								}))
-							}
+							onChange={updateFormField('fontSizeOption')}
 						/>
 					</div>
 
@@ -120,12 +122,7 @@ export const ArticleParamsForm = ({
 							title='Цвет шрифта'
 							selected={formState.fontColor}
 							options={fontColors}
-							onChange={(option) =>
-								setFormState((prev) => ({
-									...prev,
-									fontColor: option,
-								}))
-							}
+							onChange={updateFormField('fontColor')}
 						/>
 					</div>
 
@@ -136,12 +133,7 @@ export const ArticleParamsForm = ({
 							title='Цвет фона'
 							selected={formState.backgroundColor}
 							options={backgroundColors}
-							onChange={(option) =>
-								setFormState((prev) => ({
-									...prev,
-									backgroundColor: option,
-								}))
-							}
+							onChange={updateFormField('backgroundColor')}
 						/>
 					</div>
 
@@ -150,12 +142,7 @@ export const ArticleParamsForm = ({
 							title='Ширина контента'
 							selected={formState.contentWidth}
 							options={contentWidthArr}
-							onChange={(option) =>
-								setFormState((prev) => ({
-									...prev,
-									contentWidth: option,
-								}))
-							}
+							onChange={updateFormField('contentWidth')}
 						/>
 					</div>
 
